@@ -164,7 +164,6 @@ class FTPClient:
                 self.cwd("..")
                 
         print(self.send(f"RMD {path}"))
-
     
     def mk_dir(self, path):
         if self.local_mode:
@@ -266,6 +265,21 @@ class FTPClient:
                 self.cwd(path)
                 self.download_file(filename, os.path.join(local_path, filename))
                 self.cwd("..")
+                
+    def stor(self, local_path, remote_path=None):
+        if self.local_mode:
+            print("Error: no se puede subir en modo local.")
+            return
+        
+        if remote_path is None:
+            remote_path = local_path
+
+        if os.path.isfile(local_path):
+            self.upload_file(local_path, remote_path)
+        elif os.path.isdir(local_path):
+            self.upload_dir(local_path, remote_path)
+        else:
+            print(f"Error: {local_path} no es un archivo o directorio válido.")
 
     def upload_file(self, local_path, remote_path):
         data_socket = self.pasv_connect()
@@ -282,7 +296,7 @@ class FTPClient:
             data_socket.close()
             print(self.response())
         except Exception as e:
-            print(f"Error al subir el archivo {local_path}: {e}")               
+            print(f"Error al subir el archivo {local_path}: {e}")
 
     def upload_dir(self, local_dir, remote_dir):
         self.mk_dir(remote_dir)
@@ -332,8 +346,11 @@ if __name__ == "__main__":
                 client.retr(args[0])
             else:
                 print("Error: download requiere un argumento.")
-        elif command == "stor":
-            pass
+        elif command == "upload":
+            if len(args) > 0:
+                client.stor(args[0], args[1] if len(args) > 1 else None)
+            else:
+                print("Error: stor requiere un argumento.")
         elif command == "clear":
             print("\033[H\033[J")
         elif command == "cd":
