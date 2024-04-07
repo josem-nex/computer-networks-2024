@@ -1,12 +1,14 @@
 import socket
 import getpass
 import re
+import os
 
 class FTPClient:
     def __init__(self, host, port):
         self.host = host
         self.port = port
         self.ftp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.local_mode = False
 
     def connect(self):
         self.ftp_socket.connect((self.host, self.port))
@@ -59,51 +61,84 @@ class FTPClient:
             return ("Error de autenticación")
         
     def list_files(self, path):
-        
-        data_socket = self.pasv_connect()
-        if data_socket is None:
-            return
-        try:
+        if self.local_mode:
             if path is not None:
-                self.send(f"LIST {path}")
-            else:
-                self.send("LIST")
-
-            data_total = ""
-            while True:
-                data = data_socket.recv(4096).decode()
-                if not data:
-                    break
-                data_total += data
-            data_socket.close()
-            
-            print(self.response())
-            
-            for line in data_total.split("\n"):
-                if line.startswith('d'):
-                    print('\033[94m' + line + '\033[0m')
-                elif line.startswith('-'):
-                    print('\033[91m' + line + '\033[0m')  
+                if os.path.isdir(path):
+                    files = os.listdir(path)
+                    for file in files:
+                        full_path = os.path.join(path, file)
+                        if os.path.isdir(full_path):
+                            print('\033[94m' + file + '\033[0m')
+                        else:
+                            print('\033[91m' + file + '\033[0m')
                 else:
-                    print(line)
-        except Exception as e:
-            print(f"Error al recibir datos: {e}")
+                    print("Error: el directorio no existe.")
+            else:
+                files = os.listdir()
+                for file in files:
+                    full_path = os.path.join(os.getcwd(), file)
+                    if os.path.isdir(full_path):
+                        print('\033[94m' + file + '\033[0m')
+                    else:
+                        print('\033[91m' + file + '\033[0m')
+            return
+        else:
+            data_socket = self.pasv_connect()
+            if data_socket is None:
+                return
+            try:
+                if path is not None:
+                    self.send(f"LIST {path}")
+                else:
+                    self.send("LIST")
+
+                data_total = ""
+                while True:
+                    data = data_socket.recv(4096).decode()
+                    if not data:
+                        break
+                    data_total += data
+                data_socket.close()
+
+                print(self.response())
+
+                for line in data_total.split("\n"):
+                    if line.startswith('d'):
+                        print('\033[94m' + line + '\033[0m')
+                    elif line.startswith('-'):
+                        print('\033[91m' + line + '\033[0m')  
+                    else:
+                        print(line)
+            except Exception as e:
+                print(f"Error al recibir datos: {e}")
           
     def cwd(self, path):
-        if path == "..":
-            response = self.send("CDUP")
+        if self.local_mode:
+            try:
+                os.chdir(path)
+                print(f"Directorio cambiado a {path}")
+            except Exception as e:
+                print(f"Error al cambiar de directorio: {e}")
+            return
+        else:
+            if path == "..":
+                response = self.send("CDUP")
+                print(response)
+                return
+            if path == ".":
+                print("Ya se encuentra en el directorio actual.")
+                return
+
+            response = self.send(f"CWD {path}")
             print(response)
-            return
-        if path == ".":
-            print("Ya se encuentra en el directorio actual.")
-            return
-        
-        response = self.send(f"CWD {path}")
-        print(response)
     
     def pwd(self):
-        response = self.send("PWD")
-        print(response)
+        if self.local_mode:
+            print(os.getcwd())
+            return
+        else:
+            response = self.send("PWD")
+            print(response)
 
     def close(self):
         self.send("QUIT")
@@ -144,8 +179,16 @@ class FTPClient:
                 print(f'Error al crear el archivo {filename}.')
         except:
             print(f"Error al crear el archivo {filename}.")
-    
-    
+      
+    def toggle_local_mode(self, mode):
+        if mode == "local":
+            self.local_mode = True
+            print("Modo local activado.")
+        elif mode == "server":
+            self.local_mode = False
+            print("Modo servidor activado.")
+        else:
+            print("Error: modo no válido. Escriba 'local' o 'server'.")
     
 
 if __name__ == "__main__":
@@ -217,11 +260,16 @@ if __name__ == "__main__":
                 client.rename(args[0], args[1])
             else:
                 print("Error: rename requiere dos argumentos.")
-        elif command == "quit":
+        elif command == "mode":
+            if len(args) > 0:
+                client.toggle_local_mode(args[0])
+            else:
+                print("Error mode requiere un argumento: 'local' o 'server'.")
+        elif command == "quit" or command == "exit":
             client.close()
             break
         elif command == "help":
-            print("Comandos disponibles:")
+            print("Comandos disponibles para Mode server:")
             print("list: Listar los archivos del servidor.")
             print("retr: Descargar un archivo del servidor.")
             print("stor: Subir un archivo al servidor.")
@@ -234,6 +282,13 @@ if __name__ == "__main__":
             print("mkdir: Crear un directorio.")
             print("touch: Crear un archivo.")
             print("rename: Renombrar.")
+            print("mode: Cambiar entre modo local y servidor.")
+            print("help: Mostrar esta lista de comandos.")
+            print("\n")
+            print("Comandos disponibles para Mode local:")
+            print("ls: Listar los archivos del directorio actual.")
+            print("cd: Cambiar de directorio.")
+            print("pwd: Mostrar el directorio actual.")
             
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
