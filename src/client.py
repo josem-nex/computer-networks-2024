@@ -266,7 +266,24 @@ class FTPClient:
                 self.cwd(path)
                 self.download_file(filename, os.path.join(local_path, filename))
                 self.cwd("..")
-                
+
+    def upload_file(self, local_path, remote_path):
+        data_socket = self.pasv_connect()
+        if data_socket is None:
+            return
+        try:
+            self.send(f"STOR {remote_path}")
+            with open(local_path, 'rb') as file:
+                while True:
+                    data = file.read(2048)
+                    if not data:
+                        break
+                    data_socket.sendall(data)
+            data_socket.close()
+            print(self.response())
+        except Exception as e:
+            print(f"Error al subir el archivo {local_path}: {e}")               
+
 
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
