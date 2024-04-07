@@ -64,7 +64,13 @@ class FTPClient:
             data_total += data
             
         data_socket.close()
-        return data_total
+        for line in data_total.split("\n"):
+            if line.startswith('d'):
+                print('\033[94m' + line + '\033[0m')
+            elif line.startswith('-'):
+                print('\033[91m' + line + '\033[0m')  
+            else:
+                print(line)
 
     def close(self):
         self.send("QUIT")
@@ -91,14 +97,14 @@ if __name__ == "__main__":
             print("Intente de nuevo.")
     
     while True:
-        command = input("$")
+        command = input('\033[92m $ \033[0m')
         commands = command.split(" ")
         command = commands[0]
         args = commands[1:]
         
         
         if command == "list":
-            print(client.list_files())
+            client.list_files()
         elif command == "retr":
             pass
         elif command == "stor":
