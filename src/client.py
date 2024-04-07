@@ -71,6 +71,7 @@ class FTPClient:
                             print('\033[94m' + file + '\033[0m')
                         else:
                             print('\033[91m' + file + '\033[0m')
+                    return files
                 else:
                     print("Error: el directorio no existe.")
             else:
@@ -81,7 +82,7 @@ class FTPClient:
                         print('\033[94m' + file + '\033[0m')
                     else:
                         print('\033[91m' + file + '\033[0m')
-            return
+                return files
         else:
             data_socket = self.pasv_connect()
             if data_socket is None:
@@ -109,6 +110,7 @@ class FTPClient:
                         print('\033[91m' + line + '\033[0m')  
                     else:
                         print(line)
+                return data_total.split("\n")
             except Exception as e:
                 print(f"Error al recibir datos: {e}")
           
@@ -148,7 +150,15 @@ class FTPClient:
         print(self.send(f"RMD {path}"))
     
     def mk_dir(self, path):
-        print(self.send(f"MKD {path}"))
+        if self.local_mode:
+            try:
+                os.makedirs(path, exist_ok=True)
+                print(f"Directorio {path} creado con éxito.")
+            except Exception as e:
+                print(f"Error al crear el directorio {path}: {e}")
+            return
+        else:
+            print(self.send(f"MKD {path}"))
     
     def rm_file(self, path):
         print(self.send(f"DELE {path}"))
@@ -190,6 +200,56 @@ class FTPClient:
         else:
             print("Error: modo no válido. Escriba 'local' o 'server'.")
     
+    def retr(self, filename):
+        if self.local_mode:
+            print("Error: no se puede descargar en modo local.")
+            return
+        response =  self.download_file(filename, filename)
+        print(response)
+        if "550" in response:
+            print(f"Iniciando descarga del directorio {filename}...")
+            self.download_dir(filename)
+            
+    def download_file(self, remote_path, local_path):
+        data_socket = self.pasv_connect()
+        try:
+            response = self.send(f"RETR {remote_path}")
+            print(response)
+            if "550" in response:
+                return response
+
+            print(remote_path + local_path)
+            with open(local_path, 'wb') as file:
+                while True:
+                    data = data_socket.recv(2048)
+                    if not data:
+                        break
+                    file.write(data)
+            data_socket.close()
+            return self.response()
+        except:
+            print(f"Error al descargar el archivo {remote_path}")
+            
+    def download_dir(self, path):
+        local_path = os.path.join(os.getcwd(), path)
+        os.makedirs(local_path, exist_ok=True)
+        
+        files = self.list_files(path)
+
+        for file in files:
+            if file.startswith('d'):
+                dirname = file.split()[-1]
+                self.cwd(path)
+                os.chdir(path)
+                self.download_dir(dirname)
+                os.chdir("..")
+                self.cwd("..")
+            elif file.startswith('-'):
+                filename = file.split()[-1]
+                self.cwd(path)
+                self.download_file(filename, os.path.join(local_path, filename))
+                self.cwd("..")
+                
 
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
@@ -222,8 +282,11 @@ if __name__ == "__main__":
                 client.list_files(args[0])
             else:
                 client.list_files(None)
-        elif command == "retr":
-            pass
+        elif command == "download":
+            if len(args) > 0:
+                client.retr(args[0])
+            else:
+                print("Error: download requiere un argumento.")
         elif command == "stor":
             pass
         elif command == "clear":
@@ -289,6 +352,8 @@ if __name__ == "__main__":
             print("ls: Listar los archivos del directorio actual.")
             print("cd: Cambiar de directorio.")
             print("pwd: Mostrar el directorio actual.")
+            print("mkdir: Crear un directorio.")
+            
             
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
