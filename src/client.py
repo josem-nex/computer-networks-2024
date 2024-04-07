@@ -109,6 +109,44 @@ class FTPClient:
         self.send("QUIT")
         self.ftp_socket.close()
 
+    def rm_dir(self, path):
+        print(self.send(f"RMD {path}"))
+    
+    def mk_dir(self, path):
+        print(self.send(f"MKD {path}"))
+    
+    def rm_file(self, path):
+        print(self.send(f"DELE {path}"))
+    
+    def rename(self, from_name, to_name):
+        response = self.send(f"RNFR {from_name}")
+        print(response)
+        response = self.send(f"RNTO {to_name}")
+        print(response)
+    
+    def touch(self, filename):
+        data_socket = self.pasv_connect()
+        try:
+            
+            response = self.send(f"STOR {filename}") 
+            print(response)
+            data_socket.sendall(f"{''}\r\n".encode())
+            print(f"Creando archivo {filename}...")
+            
+            data_socket.close()
+            response = self.response()
+            print(response)
+            
+            
+            if response.startswith('2'):
+                print(f'Archivo {filename} creado con éxito.')
+            else:
+                print(f'Error al crear el archivo {filename}.')
+        except:
+            print(f"Error al crear el archivo {filename}.")
+    
+    
+    
 
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
@@ -154,6 +192,31 @@ if __name__ == "__main__":
                 client.cwd(".")
         elif command == "pwd":
             client.pwd()
+        elif command == "rmfil":
+            if len(args) > 0:
+                client.rm_file(args[0])
+            else:
+                print("Error: rmfil requiere un argumento.")
+        elif command == "rmdir":
+            if len(args) > 0:
+                client.rm_dir(args[0])
+            else:
+                print("Error: rmdir requiere un argumento.")
+        elif command == "mkdir":
+            if len(args) > 0:
+                client.mk_dir(args[0])
+            else:
+                print("Error: mkdir requiere un argumento.")
+        elif command == "touch":
+            if len(args) > 0:
+                client.touch(args[0])
+            else:
+                print("Error: touch requiere un argumento.")
+        elif command == "rename":
+            if len(args) > 1:
+                client.rename(args[0], args[1])
+            else:
+                print("Error: rename requiere dos argumentos.")
         elif command == "quit":
             client.close()
             break
@@ -163,5 +226,14 @@ if __name__ == "__main__":
             print("retr: Descargar un archivo del servidor.")
             print("stor: Subir un archivo al servidor.")
             print("quit: Salir del cliente.")
+            print("clear: Limpiar la pantalla.")
+            print("cd: Cambiar de directorio.")
+            print("pwd: Mostrar el directorio actual.")
+            print("rmfil: Eliminar un archivo.")
+            print("rmdir: Eliminar un directorio.")
+            print("mkdir: Crear un directorio.")
+            print("touch: Crear un archivo.")
+            print("rename: Renombrar.")
+            
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
