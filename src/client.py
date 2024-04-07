@@ -284,6 +284,17 @@ class FTPClient:
         except Exception as e:
             print(f"Error al subir el archivo {local_path}: {e}")               
 
+    def upload_dir(self, local_dir, remote_dir):
+        self.mk_dir(remote_dir)
+        for file in os.listdir(local_dir):
+            local_path = os.path.join(local_dir, file)
+            remote_path = os.path.join(remote_dir, file)
+            if os.path.isdir(local_path):
+                self.upload_dir(local_path, remote_path)
+            elif os.path.isfile(local_path):
+                self.upload_file(local_path, remote_path)
+            else:
+                print(f"Error: {local_path} no es un archivo o directorio válido.")
 
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
