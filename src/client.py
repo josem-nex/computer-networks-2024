@@ -147,7 +147,24 @@ class FTPClient:
         self.ftp_socket.close()
 
     def rm_dir(self, path):
+        if self.local_mode:
+            print("Error: no se puede eliminar en modo local.")
+            return
+        files = self.list_files(path)
+        for file in files:
+            if file.startswith('d'):
+                self.cwd(path)
+                dirname = file.split()[-1]
+                self.rm_dir(dirname)
+                self.cwd("..")
+            elif file.startswith('-'):
+                self.cwd(path)
+                filename = file.split()[-1]
+                self.rm_file(filename)
+                self.cwd("..")
+                
         print(self.send(f"RMD {path}"))
+
     
     def mk_dir(self, path):
         if self.local_mode:
