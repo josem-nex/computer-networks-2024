@@ -347,7 +347,14 @@ class FTPClient:
                     condition = False
                     break
                     
-            
+    def size(self, filename):
+        if self.local_mode:
+            print("Error: no se puede obtener el tamaño de archivos en modo local.")
+            return
+        else:
+            print(f"Obtener el tamaño de {filename}...")
+            response = self.send(f"SIZE {filename}")
+            print(response)
 
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
@@ -429,6 +436,11 @@ if __name__ == "__main__":
                 client.toggle_local_mode(args[0])
             else:
                 print("Error mode requiere un argumento: 'local' o 'server'.")
+        elif command == "size":
+            if len(args) > 0:
+                client.size(args[0])
+            else:
+                print("Error: size requiere un argumento.")
         elif command == "quit" or command == "exit":
             client.close()
             break
@@ -454,7 +466,6 @@ if __name__ == "__main__":
             print("download: Descargar un archivo o directorio del servidor.")
             print("upload: Subir un archivo o directorio al servidor.")
             print("stop: Detener la descarga de un archivo.")
-            
-            
+            print("size: Obtener el tamaño de un archivo.")
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
