@@ -48,10 +48,29 @@ class FTPClient:
     def send(self, message):
         self.ftp_socket.sendall(f"{message}\r\n".encode())
         return self.response()
+    
+    def default_login(self):
+
+        self.send(f"USER anonymous\r\n")
+        response = self.send(f"PASS anonymous")
+
+        if "230" in response: 
+            print("entrando como usuario anonimo")
+            return response
+        else:
+            return ("Error de autenticación")
+
 
     def login(self):
         username = input("Ingrese el nombre de usuario: ")
+        if username == "":
+            return self.default_login()
+        
         self.send(f"USER {username}\r\n")
+
+        
+            
+
         password = getpass.getpass("Ingrese la contraseña: ")
         response = self.send(f"PASS {password}\r\n")
          
