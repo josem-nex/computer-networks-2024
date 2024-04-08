@@ -1,4 +1,8 @@
 import socket
+import threading
+import queue
+import select
+import sys
 import getpass
 import re
 import os
@@ -9,6 +13,7 @@ class FTPClient:
         self.port = port
         self.ftp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.local_mode = False
+        self.command_queue = queue.Queue()
 
     def connect(self):
         self.ftp_socket.connect((self.host, self.port))
@@ -252,19 +257,33 @@ class FTPClient:
             print(response)
             if "550" in response:
                 return response
-
-            print(remote_path + local_path)
+            command = ""
             with open(local_path, 'wb') as file:
+                # Iniciar un hilo para detectar el comando de stop
+                stop_thread = threading.Thread(target=self.detect_stop_command)
+                stop_thread.start()
+
                 while True:
+                    if not self.command_queue.empty():
+                        command = self.command_queue.get()
+                        if command == 'stop':
+                            print("Descarga cancelada por el usuario.")
+                            break
                     data = data_socket.recv(2048)
-                    if not data:
+                    if not data: # Verifica si el evento está señalizado
                         break
                     file.write(data)
+
+            # print("Descarga completada.")
+            if command != 'stop':
+                self.command_queue.put('download_complete')
+
+            stop_thread.join()
             data_socket.close()
             return self.response()
         except:
             print(f"Error al descargar el archivo {remote_path}")
-            
+       
     def download_dir(self, path):
         local_path = os.path.join(os.getcwd(), path)
         os.makedirs(local_path, exist_ok=True)
@@ -329,6 +348,33 @@ class FTPClient:
             else:
                 print(f"Error: {local_path} no es un archivo o directorio válido.")
 
+    def detect_stop_command(self):
+        condition = True
+        while condition:
+            if not self.command_queue.empty():
+                command = self.command_queue.get()
+                if command == 'download_complete':
+                    print("Descarga completada.")
+                    condition = False
+                    break
+                else:
+                    self.command_queue.put(command)
+            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                line = sys.stdin.readline()
+                if line.strip().lower() == 'stop':
+                    self.command_queue.put('stop')
+                    condition = False
+                    break
+                    
+    def size(self, filename):
+        if self.local_mode:
+            print("Error: no se puede obtener el tamaño de archivos en modo local.")
+            return
+        else:
+            print(f"Obtener el tamaño de {filename}...")
+            response = self.send(f"SIZE {filename}")
+            print(response)
+
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
     port = 21
@@ -351,7 +397,7 @@ if __name__ == "__main__":
     while True:
         command = input('\033[92m $ \033[0m')
         commands = command.split(" ")
-        command = commands[0]
+        command = commands[0].lower()
         args = commands[1:]
         
         
@@ -409,32 +455,36 @@ if __name__ == "__main__":
                 client.toggle_local_mode(args[0])
             else:
                 print("Error mode requiere un argumento: 'local' o 'server'.")
+        elif command == "size":
+            if len(args) > 0:
+                client.size(args[0])
+            else:
+                print("Error: size requiere un argumento.")
         elif command == "quit" or command == "exit":
             client.close()
             break
         elif command == "help":
-            print("Comandos disponibles para Mode server:")
-            print("list: Listar los archivos del servidor.")
-            print("retr: Descargar un archivo del servidor.")
-            print("stor: Subir un archivo al servidor.")
-            print("quit: Salir del cliente.")
-            print("clear: Limpiar la pantalla.")
-            print("cd: Cambiar de directorio.")
-            print("pwd: Mostrar el directorio actual.")
-            print("rmfil: Eliminar un archivo.")
-            print("rmdir: Eliminar un directorio.")
-            print("mkdir: Crear un directorio.")
-            print("touch: Crear un archivo.")
-            print("rename: Renombrar.")
-            print("mode: Cambiar entre modo local y servidor.")
-            print("help: Mostrar esta lista de comandos.")
-            print("\n")
-            print("Comandos disponibles para Mode local:")
+            print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
             print("cd: Cambiar de directorio.")
             print("pwd: Mostrar el directorio actual.")
             print("mkdir: Crear un directorio.")
+            print("clear: Limpiar la pantalla.")
+            print("mode: Cambiar entre modo local y servidor.")
+            print("help: Mostrar esta lista de comandos.")
+            print("\n")
             
-            
+            print("Comandos disponibles para Mode server:")
+            print("retr: Descargar un archivo del servidor.")
+            print("stor: Subir un archivo al servidor.")
+            print("quit: Salir del cliente.")
+            print("rmfil: Eliminar un archivo.")
+            print("rmdir: Eliminar un directorio.")
+            print("touch: Crear un archivo.")
+            print("rename: Renombrar.")
+            print("download: Descargar un archivo o directorio del servidor.")
+            print("upload: Subir un archivo o directorio al servidor.")
+            print("stop: Detener la descarga de un archivo.")
+            print("size: Obtener el tamaño de un archivo.")
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
