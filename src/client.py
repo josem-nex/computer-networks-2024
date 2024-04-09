@@ -14,14 +14,14 @@ class FTPClient:
         self.ftp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.local_mode = False
         self.command_queue = queue.Queue()
-        self.ftp_socket.settimeout(5)
+        ## self.ftp_socket.settimeout(10)
 
     def connect(self):
         self.ftp_socket.connect((self.host, self.port))
         return self.response()
     
     def transfer_mode_info(self):
-        self.send("SYST")
+        print(self.send("SYST"))
 
     def pasv_connect(self):
         try:
@@ -77,21 +77,25 @@ class FTPClient:
         
         self.send(f"USER {username}\r\n")
 
-        
-            
-
         password = getpass.getpass("Ingrese la contraseña: ")
         response = self.send(f"PASS {password}\r\n")
-         
-        if "230" in response: 
+
+        req = input("Requiere una cuenta específica? s- SI n- NO: ")
+        if req == "s":
+            account = input("Ingrese su cuenta: ")
+
+            acct_response = self.send(f"ACCT {account}") 
+            return acct_response
+
+        elif "230" in response: 
             return response
         else:
             return ("Error de autenticación")
-
-    #def acct_info(self):
-
+        
     def help_ftp(self):
-        print(self.send("HELP"))
+        response = self.send("HELP")
+        response += self.response()
+        print(response)
 
     def list_files(self, path):
         if self.local_mode:
