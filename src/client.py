@@ -6,6 +6,7 @@ import sys
 import getpass
 import re
 import os
+import time
 
 class FTPClient:
     def __init__(self, host, port):
@@ -414,6 +415,26 @@ class FTPClient:
                 print("Intente de nuevo.")
     def mount_file_system(self, pathname):
         print(self.send(f"SMNT {pathname}"))
+
+    def noop_loop(self):
+        self.stop = False
+        while True:
+            response = self.send("NOOP")
+            if self.stop:
+                break
+            print(response)
+            time.sleep(10)
+
+    def idle(self):
+        noop_thread = threading.Thread(target=self.noop_loop)
+        noop_thread.start()
+        
+        while True:
+            stop = input("Presione Enter para continuar la conexion: \n")
+            if stop == "": 
+                self.stop = True
+                noop_thread.join()
+                break
         
         
 if __name__ == "__main__":
@@ -522,6 +543,8 @@ if __name__ == "__main__":
                 client.mount_file_system(args[0])
             else:
                 print("Error: smnt requiere un argumento.")
+        elif command == "idle":
+            client.idle()
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
@@ -548,5 +571,6 @@ if __name__ == "__main__":
             print("rein: Reiniciar la conexión con el servidor.")
             print("rein-local: Reiniciar la conexión desde el cliente.")
             print("smnt: Montar un sistema de archivos.")
+            print("server-info: Mostrar estado actual del servidor")
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
