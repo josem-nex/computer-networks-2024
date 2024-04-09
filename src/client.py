@@ -19,10 +19,14 @@ class FTPClient:
         self.ftp_socket.connect((self.host, self.port))
         return self.response()
     
+    def transfer_mode_info(self):
+        self.send("SYST")
+
     def pasv_connect(self):
         try:
             # Enviar el comando PASV al servidor y obtener la respuesta
             response =self.send("PASV") 
+            print(response)
             # Extraer la dirección IP y el puerto de la respuesta, expresión regular
             match = re.search(r'(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)', response)
             if match:
@@ -65,7 +69,6 @@ class FTPClient:
         else:
             return ("Error de autenticación")
 
-
     def login(self):
         username = input("Ingrese el nombre de usuario: ")
         if username == "":
@@ -83,7 +86,12 @@ class FTPClient:
             return response
         else:
             return ("Error de autenticación")
-        
+
+    #def acct_info(self):
+
+    def help_ftp(self):
+        print(self.send("HELP"))
+
     def list_files(self, path):
         if self.local_mode:
             if path is not None:
@@ -455,6 +463,8 @@ if __name__ == "__main__":
                 client.toggle_local_mode(args[0])
             else:
                 print("Error mode requiere un argumento: 'local' o 'server'.")
+        elif command == "syst":
+            client.transfer_mode_info()
         elif command == "size":
             if len(args) > 0:
                 client.size(args[0])
@@ -463,6 +473,8 @@ if __name__ == "__main__":
         elif command == "quit" or command == "exit":
             client.close()
             break
+        elif command == "ftp-help":
+            client.help_ftp()
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
@@ -486,5 +498,6 @@ if __name__ == "__main__":
             print("upload: Subir un archivo o directorio al servidor.")
             print("stop: Detener la descarga de un archivo.")
             print("size: Obtener el tamaño de un archivo.")
+            print("syst: Ver modo de transferencia actual.")
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
