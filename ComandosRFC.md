@@ -81,3 +81,13 @@ Método rein-local
 ## SMNT
 
 Método smnt
+
+## ABORT
+
+Método abort
+Método download_file
+
+## NOOP
+
+Método noop
+Método idle
