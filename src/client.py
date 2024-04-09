@@ -59,6 +59,16 @@ class FTPClient:
         self.ftp_socket.sendall(f"{message}\r\n".encode())
         return self.response()
     
+    def server_info(self, path):
+        if path is None:
+            response = self.send("STAT ")
+            response += self.response()
+            print(response)
+        else:
+            response = self.send("STAT {path}")
+            response += self.response()
+            print(response)
+
     def default_login(self):
 
         self.send(f"USER anonymous\r\n")
@@ -475,6 +485,11 @@ if __name__ == "__main__":
                 client.size(args[0])
             else:
                 print("Error: size requiere un argumento.")
+        elif command == "server-info":
+            if len(args) > 0:
+                client.server_info(args[0])
+            else:
+                client.server_info(None)
         elif command == "quit" or command == "exit":
             client.close()
             break
