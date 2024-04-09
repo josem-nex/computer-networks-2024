@@ -77,3 +77,7 @@ Método size
 
 Método rein
 Método rein-local
+
+## SMNT
+
+Método smnt

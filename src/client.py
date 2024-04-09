@@ -412,6 +412,8 @@ class FTPClient:
                 break
             else:
                 print("Intente de nuevo.")
+    def mount_file_system(self, pathname):
+        print(self.send(f"SMNT {pathname}"))
         
         
 if __name__ == "__main__":
@@ -515,6 +517,11 @@ if __name__ == "__main__":
             client.rein()
         elif command == "rein-local":
             client.reinLocal()
+        elif command == "smnt":
+            if len(args) > 0:
+                client.mount_file_system(args[0])
+            else:
+                print("Error: smnt requiere un argumento.")
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
@@ -540,5 +547,6 @@ if __name__ == "__main__":
             print("server-info: Ver información del servidor.")
             print("rein: Reiniciar la conexión con el servidor.")
             print("rein-local: Reiniciar la conexión desde el cliente.")
+            print("smnt: Montar un sistema de archivos.")
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
