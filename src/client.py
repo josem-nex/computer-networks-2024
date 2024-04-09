@@ -289,7 +289,7 @@ class FTPClient:
                 while True:
                     if not self.command_queue.empty():
                         command = self.command_queue.get()
-                        if command == 'stop':
+                        if command == 'cancel':
                             print("Descarga cancelada por el usuario.")
                             break
                     data = data_socket.recv(2048)
@@ -298,8 +298,8 @@ class FTPClient:
                     file.write(data)
 
             # print("Descarga completada.")
-            if command != 'stop':
-                self.command_queue.put('download_complete')
+            if command != 'cancel':
+                self.command_queue.put('transferencia_completada')
 
             stop_thread.join()
             data_socket.close()
@@ -376,18 +376,22 @@ class FTPClient:
         while condition:
             if not self.command_queue.empty():
                 command = self.command_queue.get()
-                if command == 'download_complete':
-                    print("Descarga completada.")
+                if command == 'transferencia_completada':
+                    print("Transferencia completada.")
                     condition = False
                     break
                 else:
                     self.command_queue.put(command)
             while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                 line = sys.stdin.readline()
-                if line.strip().lower() == 'stop':
-                    self.command_queue.put('stop')
+                if line.strip().lower() == 'cancel':
+                    self.command_queue.put('cancel')
                     condition = False
                     break
+    def abort(self):
+        response = self.send("ABOR")
+        print(response)
+
                     
     def size(self, filename):
         if self.local_mode:
@@ -522,6 +526,8 @@ if __name__ == "__main__":
                 client.mount_file_system(args[0])
             else:
                 print("Error: smnt requiere un argumento.")
+        elif command == "stop":
+            client.abort()
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
@@ -541,12 +547,14 @@ if __name__ == "__main__":
             print("rename: Renombrar.")
             print("download: Descargar un archivo o directorio del servidor.")
             print("upload: Subir un archivo o directorio al servidor.")
-            print("stop: Detener la descarga de un archivo.")
+            print("stop: Detener comando.")
+            print("cancel: Cancelar la transferencia.")
             print("size: Obtener el tamaño de un archivo.")
             print("syst: Ver modo de transferencia actual.")
             print("server-info: Ver información del servidor.")
             print("rein: Reiniciar la conexión con el servidor.")
             print("rein-local: Reiniciar la conexión desde el cliente.")
             print("smnt: Montar un sistema de archivos.")
+            
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
