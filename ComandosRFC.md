@@ -72,3 +72,8 @@ Método download_dir
 ## SIZE
 
 Método size
+
+## REIN
+
+Método rein
+Método rein-local

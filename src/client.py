@@ -397,7 +397,23 @@ class FTPClient:
             print(f"Obtener el tamaño de {filename}...")
             response = self.send(f"SIZE {filename}")
             print(response)
-
+    def rein(self):
+        print(self.send("REIN"))
+    def reinLocal(self):
+        self.close()
+        self.ftp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.local_mode = False
+        self.command_queue = queue.Queue()
+        self.connect()
+        while True:
+            response = client.login()
+            print(response)
+            if "230" in response:
+                break
+            else:
+                print("Intente de nuevo.")
+        
+        
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
     port = 21
@@ -495,6 +511,10 @@ if __name__ == "__main__":
                 client.server_info(args)
             else:
                 client.server_info(None)
+        elif command == "rein":
+            client.rein()
+        elif command == "rein-local":
+            client.reinLocal()
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
@@ -517,5 +537,8 @@ if __name__ == "__main__":
             print("stop: Detener la descarga de un archivo.")
             print("size: Obtener el tamaño de un archivo.")
             print("syst: Ver modo de transferencia actual.")
+            print("server-info: Ver información del servidor.")
+            print("rein: Reiniciar la conexión con el servidor.")
+            print("rein-local: Reiniciar la conexión desde el cliente.")
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
