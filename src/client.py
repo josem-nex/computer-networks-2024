@@ -14,6 +14,7 @@ class FTPClient:
         self.ftp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.local_mode = False
         self.command_queue = queue.Queue()
+        self.ftp_socket.settimeout(5)
 
     def connect(self):
         self.ftp_socket.connect((self.host, self.port))
@@ -487,8 +488,6 @@ if __name__ == "__main__":
             print("\n")
             
             print("Comandos disponibles para Mode server:")
-            print("retr: Descargar un archivo del servidor.")
-            print("stor: Subir un archivo al servidor.")
             print("quit: Salir del cliente.")
             print("rmfil: Eliminar un archivo.")
             print("rmdir: Eliminar un directorio.")
