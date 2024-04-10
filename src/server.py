@@ -187,9 +187,9 @@ class FTPServer:
 
     def load_users(self):
         try:
-            register_file = open("src/users.txt.txt", "r")
+            register_file = open("src/users.txt", "r")
         except FileNotFoundError:
-            print("Ocurrió un error")
+            print("Ocurrió un error: No se encontró el archivo users.txt")
             sys.exit()
 
         users = []
