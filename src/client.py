@@ -527,7 +527,7 @@ class FTPClient:
 
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
-    port = 21
+    port = 22
 
     client = FTPClient(host, port)
     try :
