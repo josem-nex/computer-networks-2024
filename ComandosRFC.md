@@ -141,3 +141,7 @@ C para compressed
 
 Método restart_transfer
 Solo funciona con el type I, binario
+
+## ALLO
+
+En upload_file

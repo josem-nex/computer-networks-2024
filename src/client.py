@@ -309,7 +309,6 @@ class FTPClient:
                 # Iniciar un hilo para detectar el comando de stop
                 stop_thread = threading.Thread(target=self.detect_stop_command)
                 stop_thread.start()
-
                 while True:
                     if not self.command_queue.empty():
                         command = self.command_queue.get()
@@ -323,7 +322,7 @@ class FTPClient:
 
             # print("Descarga completada.")
             if command != 'stop':
-                self.command_queue.put('download_complete')
+                self.command_queue.put('transfer_complete')
 
             stop_thread.join()
             data_socket.close()
@@ -387,15 +386,29 @@ class FTPClient:
         try:
             self.send(f"ALLO {os.path.getsize(local_path)}")
 
-            self.send(f"STOR {remote_path}")
+            response = self.send(f"STOR {remote_path}")
+            print(response)
+            
             with open(local_path, 'rb') as file:
+                stop_thread = threading.Thread(target=self.detect_stop_command)
+                stop_thread.start()
                 while True:
+                    if not self.command_queue.empty():
+                        command = self.command_queue.get()
+                        if command == 'stop':
+                            print("Subida cancelada por el usuario.")
+                            break
                     data = file.read(2048)
                     if not data:
                         break
                     data_socket.sendall(data)
+                    
+            if command != 'stop':
+                self.command_queue.put('transfer_complete')
+            
+            stop_thread.join()
             data_socket.close()
-            print(self.response())
+            return self.response()
         except Exception as e:
             print(f"Error al subir el archivo {local_path}: {e}")
     
@@ -428,8 +441,8 @@ class FTPClient:
         while condition:
             if not self.command_queue.empty():
                 command = self.command_queue.get()
-                if command == 'download_complete':
-                    print("Descarga completada.")
+                if command == 'transfer_complete':
+                    print("Transferencia completada.")
                     condition = False
                     break
                 else:
