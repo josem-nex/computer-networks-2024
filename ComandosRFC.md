@@ -110,3 +110,7 @@ Método store_unique
 ## APPE
 
 Método append
+
+## SITE
+
+Método site_commands
