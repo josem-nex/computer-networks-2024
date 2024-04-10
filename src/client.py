@@ -351,7 +351,21 @@ class FTPClient:
                 self.cwd(path)
                 self.download_file(filename, os.path.join(local_path, filename))
                 self.cwd("..")
-                
+
+    def get_size_directory(self, directory):
+        total = 0
+
+        for entry in os.listdir(directory):
+            local_path = os.path.join(directory, entry)
+            if os.path.isfile(local_path):
+                total += os.path.getsize(local_path)
+            elif os.path.isdir(local_path):
+                total += self.get_size_directory(local_path)
+            else:
+                print(f"Error: {local_path} no es un archivo o directorio válido.")
+
+        return total
+    
     def stor(self, local_path, remote_path=None):
         if self.local_mode:
             print("Error: no se puede subir en modo local.")
@@ -372,6 +386,8 @@ class FTPClient:
         if data_socket is None:
             return
         try:
+            self.send(f"ALLO {os.path.getsize(local_path)}")
+
             self.send(f"STOR {remote_path}")
             with open(local_path, 'rb') as file:
                 while True:
@@ -504,6 +520,7 @@ class FTPClient:
         print(response)
     
                 
+
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
     port = 21
