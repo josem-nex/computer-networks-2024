@@ -62,7 +62,7 @@ class FTPClient:
     
     def server_info(self, path):
         if path is None:
-            response = self.send("STAT ")
+            response = self.send("STAT")
             response += self.response()
             print(response)
         else:
