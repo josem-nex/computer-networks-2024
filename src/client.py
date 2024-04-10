@@ -398,8 +398,10 @@ class FTPClient:
             print(f"Obtener el tamaño de {filename}...")
             response = self.send(f"SIZE {filename}")
             print(response)
+    
     def rein(self):
         print(self.send("REIN"))
+    
     def reinLocal(self):
         self.close()
         self.ftp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -413,6 +415,7 @@ class FTPClient:
                 break
             else:
                 print("Intente de nuevo.")
+    
     def mount_file_system(self, pathname):
         print(self.send(f"SMNT {pathname}"))
 
@@ -435,8 +438,20 @@ class FTPClient:
                 self.stop = True
                 noop_thread.join()
                 break
-        
-        
+    
+    def store_unique(self):
+        data_socket = self.pasv_connect()
+        try:
+            response = self.send("STOU")
+            print(response)
+            if "550" in response:
+                return response
+           
+            data_socket.close()
+            return self.response()
+        except:
+            print(f"Error en el comando STOU")
+
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
     port = 21
@@ -545,6 +560,9 @@ if __name__ == "__main__":
                 print("Error: smnt requiere un argumento.")
         elif command == "idle":
             client.idle()
+        elif command == "unique-file":
+            client.store_unique()
+
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
@@ -572,5 +590,7 @@ if __name__ == "__main__":
             print("rein-local: Reiniciar la conexión desde el cliente.")
             print("smnt: Montar un sistema de archivos.")
             print("server-info: Mostrar estado actual del servidor")
+            print("idle: Mantener conexión activa con el server hasta nuevo aviso")
+            print("unique-file: crear archivo con nombre único en el servidor")
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
