@@ -107,7 +107,31 @@ class FTPClient:
         response = self.send("HELP")
         response += self.response()
         print(response)
+        
+    def nlst(self, path):
+        data_socket = self.pasv_connect()
+        try:
+            if path is not None:
+                self.send(f"NLST {path}")
+            else:
+                self.send("NLST")
+                
+            data_total = ""
+            while True:
+                data = data_socket.recv(4096).decode()
+                if not data:
+                    break
+                data_total += data
+            data_socket.close()
 
+            print(self.response())
+
+            for line in data_total.split("\n"):
+                print(line)
+            return data_total.split("\n")
+        except Exception as e:
+            print(f"Error al recibir datos: {e}")
+            
     def list_files(self, path):
         if self.local_mode:
             if path is not None:
@@ -478,6 +502,8 @@ class FTPClient:
         else:
             response = self.send(f"SITE {command} {argument}")
         print(response)
+    
+                
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
     port = 21
@@ -613,9 +639,14 @@ if __name__ == "__main__":
                 client.site_commands(args[0], None)
             else:
                 print("Error, site recibe argumentos")
+        elif command == "nlst":
+            if len(args) > 0:
+                client.nlst(args[0])
+            else:
+                client.nlst(None)
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
-            print("ls: Listar los archivos del directorio actual.")
+            print("ls: Listar los archivos y carpetas con descripción del directorio actual.")
             print("cd: Cambiar de directorio.")
             print("pwd: Mostrar el directorio actual.")
             print("mkdir: Crear un directorio.")
@@ -646,6 +677,7 @@ if __name__ == "__main__":
             print("type: Establecer el tipo de transferencia.")
             print("appe: Agregar datos al final de un archivo.")
             print("site: Enviar comandos específicos al servidor.")
+            print("nlst: Listar archivos y directorios en el servidor.")
             
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")

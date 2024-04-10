@@ -114,3 +114,11 @@ Método append
 ## SITE
 
 Método site_commands
+
+## STAT
+
+Método server_info
+
+## NLST
+
+Método nlst
