@@ -15,7 +15,7 @@ class FTPClient:
         self.ftp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.local_mode = False
         self.command_queue = queue.Queue()
-        ## self.ftp_socket.settimeout(10)
+        self.ftp_socket.settimeout(5)
 
     def connect(self):
         self.ftp_socket.connect((self.host, self.port))
