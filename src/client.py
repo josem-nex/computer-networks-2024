@@ -290,7 +290,7 @@ class FTPClient:
                 while True:
                     if not self.command_queue.empty():
                         command = self.command_queue.get()
-                        if command == 'cancel':
+                        if command == 'stop':
                             print("Descarga cancelada por el usuario.")
                             break
                     data = data_socket.recv(2048)
@@ -299,8 +299,8 @@ class FTPClient:
                     file.write(data)
 
             # print("Descarga completada.")
-            if command != 'cancel':
-                self.command_queue.put('transferencia_completada')
+            if command != 'stop':
+                self.command_queue.put('download_complete')
 
             stop_thread.join()
             data_socket.close()
@@ -377,22 +377,18 @@ class FTPClient:
         while condition:
             if not self.command_queue.empty():
                 command = self.command_queue.get()
-                if command == 'transferencia_completada':
-                    print("Transferencia completada.")
+                if command == 'download_complete':
+                    print("Descarga completada.")
                     condition = False
                     break
                 else:
                     self.command_queue.put(command)
             while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                 line = sys.stdin.readline()
-                if line.strip().lower() == 'cancel':
-                    self.command_queue.put('cancel')
+                if line.strip().lower() == 'stop':
+                    self.command_queue.put('stop')
                     condition = False
                     break
-    def abort(self):
-        response = self.send("ABOR")
-        print(response)
-
                     
     def size(self, filename):
         if self.local_mode:
@@ -446,8 +442,20 @@ class FTPClient:
 
         response = self.send(f"PORT {h1},{h2},{h3},{h4},{p1},{p2}")
         print(response)
-        
-        
+    
+    def store_unique(self):
+        data_socket = self.pasv_connect()
+        try:
+            response = self.send("STOU")
+            print(response)
+            if "550" in response:
+                return response
+           
+            data_socket.close()
+            return self.response()
+        except:
+            print(f"Error en el comando STOU")
+
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
     port = 21
@@ -556,6 +564,9 @@ if __name__ == "__main__":
                 print("Error: smnt requiere un argumento.")
         elif command == "idle":
             client.idle()
+        elif command == "unique-file":
+            client.store_unique()
+
         elif command == "stop":
             client.abort()
         elif command == "port":
@@ -582,8 +593,7 @@ if __name__ == "__main__":
             print("rename: Renombrar.")
             print("download: Descargar un archivo o directorio del servidor.")
             print("upload: Subir un archivo o directorio al servidor.")
-            print("stop: Detener comando.")
-            print("cancel: Cancelar la transferencia.")
+            print("stop: Detener la descarga de un archivo.")
             print("size: Obtener el tamaño de un archivo.")
             print("syst: Ver modo de transferencia actual.")
             print("server-info: Ver información del servidor.")
@@ -591,6 +601,8 @@ if __name__ == "__main__":
             print("rein-local: Reiniciar la conexión desde el cliente.")
             print("smnt: Montar un sistema de archivos.")
             print("server-info: Mostrar estado actual del servidor")
+            print("idle: Mantener conexión activa con el server hasta nuevo aviso")
+            print("unique-file: crear archivo con nombre único en el servidor")
             print("idle: Mantener la conexión activa.")
             print("port: Establecer una conexión de datos.")
             
