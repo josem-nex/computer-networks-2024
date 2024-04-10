@@ -601,7 +601,6 @@ if __name__ == "__main__":
             print("rein-local: Reiniciar la conexión desde el cliente.")
             print("smnt: Montar un sistema de archivos.")
             print("server-info: Mostrar estado actual del servidor")
-            print("idle: Mantener conexión activa con el server hasta nuevo aviso")
             print("unique-file: crear archivo con nombre único en el servidor")
             print("idle: Mantener la conexión activa.")
             print("port: Establecer una conexión de datos.")
