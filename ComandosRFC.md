@@ -106,3 +106,7 @@ Método type
 ## STOU
 
 Método store_unique
+
+## APPE
+
+Método append

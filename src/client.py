@@ -359,6 +359,18 @@ class FTPClient:
             print(self.response())
         except Exception as e:
             print(f"Error al subir el archivo {local_path}: {e}")
+    
+    def append(self, filename, data):
+        data_socket = self.pasv_connect()
+
+        self.send(f"APPE {filename}")
+
+        data_socket.sendall(data.encode())
+
+        data_socket.close()
+
+        response = self.response()
+        print(response)
 
     def upload_dir(self, local_dir, remote_dir):
         self.mk_dir(remote_dir)
@@ -584,6 +596,11 @@ if __name__ == "__main__":
                 client.set_transfer_type(args[0])
             else:
                 print("Error: type requiere un argumento.")
+        elif command == "appe":
+            if len(args) > 0:
+                client.append(args[0], args[1])
+            else:
+                print("Error: appe requiere dos argumentos.")
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
@@ -614,6 +631,8 @@ if __name__ == "__main__":
             print("unique-file: crear archivo con nombre único en el servidor")
             print("idle: Mantener la conexión activa.")
             print("port: Establecer una conexión de datos.")
+            print("type: Establecer el tipo de transferencia.")
+            print("appe: Agregar datos al final de un archivo.")
             
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
