@@ -446,6 +446,9 @@ class FTPClient:
 
         response = self.send(f"PORT {h1},{h2},{h3},{h4},{p1},{p2}")
         print(response)
+    def set_transfer_type(self, type_code):
+        response = self.send(f"TYPE {type_code}")
+        print(response)
         
         
 if __name__ == "__main__":
@@ -563,6 +566,11 @@ if __name__ == "__main__":
                 client.portCnx(args[0], int(args[1]))
             else:
                 print("Error: port requiere un argumento.")
+        elif command =="type":
+            if len(args) > 0:
+                client.set_transfer_type(args[0])
+            else:
+                print("Error: type requiere un argumento.")
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")

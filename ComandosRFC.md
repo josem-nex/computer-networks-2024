@@ -95,3 +95,10 @@ Método idle
 ## PORT
 
 Método portCnx
+
+## TYPE
+
+Método type
+
+- A para ASCII
+- I para binario
