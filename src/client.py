@@ -303,6 +303,7 @@ class FTPClient:
             response = self.send(f"RETR {remote_path}")
             if "550" in response:
                 return response
+            print(response)
             command = ""
             with open(local_path, 'wb') as file:
                 # Iniciar un hilo para detectar el comando de stop
@@ -519,6 +520,10 @@ class FTPClient:
         """
         response = self.send(f"MODE {mode_code}")
         print(response)
+    def restart_transfer(self, marker):
+        response = self.send(f"REST {marker}")
+        
+        print(response)
 
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
@@ -670,6 +675,11 @@ if __name__ == "__main__":
                 client.set_transfer_mode(args[0])
             else:
                 print("Error: tmode requiere un argumento.")
+        elif command == "restart":
+            if len(args) > 0:
+                client.restart_transfer(args[0])
+            else:
+                print("Error: restart requiere un argumento.")
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos y carpetas con descripción del directorio actual.")
@@ -706,6 +716,7 @@ if __name__ == "__main__":
             print("nlst: Listar archivos y directorios en el servidor.")
             print("stru: Establecer la estructura de archivo.")
             print("tmode: Establecer el modo de transferencia.")
+            print("restart: Reiniciar la transferencia, solo en type I, binario.")
             
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")

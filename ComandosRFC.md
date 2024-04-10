@@ -136,3 +136,8 @@ Método set_transfer_mode
 S para stream
 B para block
 C para compressed
+
+## REST
+
+Método restart_transfer
+Solo funciona con el type I, binario
