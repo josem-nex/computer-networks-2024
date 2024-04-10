@@ -122,3 +122,17 @@ Método server_info
 ## NLST
 
 Método nlst
+
+## STRU
+
+Método set_file_structure
+F para archivo (sin estructura de registro)
+R para estructura de registro
+P para estructura de página
+
+## MODE
+
+Método set_transfer_mode
+S para stream
+B para block
+C para compressed

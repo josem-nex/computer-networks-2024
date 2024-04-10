@@ -293,7 +293,6 @@ class FTPClient:
             print("Error: no se puede descargar en modo local.")
             return
         response =  self.download_file(filename, filename)
-        print(response)
         if "550" in response:
             print(f"Iniciando descarga del directorio {filename}...")
             self.download_dir(filename)
@@ -302,7 +301,6 @@ class FTPClient:
         data_socket = self.pasv_connect()
         try:
             response = self.send(f"RETR {remote_path}")
-            print(response)
             if "550" in response:
                 return response
             command = ""
@@ -493,6 +491,10 @@ class FTPClient:
             print(f"Error en el comando STOU")
 
     def set_transfer_type(self, type_code):
+        """
+        Args:
+        - type_code: Una cadena que representa el tipo de transferencia ('A', 'I').
+        """
         response = self.send(f"TYPE {type_code}")
         print(response)
 
@@ -502,8 +504,22 @@ class FTPClient:
         else:
             response = self.send(f"SITE {command} {argument}")
         print(response)
-    
+    def set_file_structure(self, structure_code):
+        """
+        Args:
+        - structure_code: Una cadena que representa la estructura de archivo ('F', 'R', 'P').
+        """
+        response = self.send(f"STRU {structure_code}")
+        print(response)  
                 
+    def set_transfer_mode(self, mode_code):
+        """
+        Args:
+        - mode_code: Una cadena que representa el modo de transferencia ('S', 'B', 'C').
+        """
+        response = self.send(f"MODE {mode_code}")
+        print(response)
+
 if __name__ == "__main__":
     host = input("Ingrese la dirección del servidor FTP: ")
     port = 21
@@ -644,6 +660,16 @@ if __name__ == "__main__":
                 client.nlst(args[0])
             else:
                 client.nlst(None)
+        elif command == "stru":
+            if len(args) > 0:
+                client.set_file_structure(args[0])
+            else:
+                print("Error: stru requiere un argumento.")
+        elif command == "tmode":
+            if len(args) > 0:
+                client.set_transfer_mode(args[0])
+            else:
+                print("Error: tmode requiere un argumento.")
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos y carpetas con descripción del directorio actual.")
@@ -678,6 +704,8 @@ if __name__ == "__main__":
             print("appe: Agregar datos al final de un archivo.")
             print("site: Enviar comandos específicos al servidor.")
             print("nlst: Listar archivos y directorios en el servidor.")
+            print("stru: Establecer la estructura de archivo.")
+            print("tmode: Establecer el modo de transferencia.")
             
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")
