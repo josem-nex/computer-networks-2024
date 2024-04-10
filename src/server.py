@@ -52,8 +52,8 @@ class ThreadFunctions(Thread):
             self.client_socket.sendall(packet.encode())
 
     def pwd(self):
-        # TODO
-        pass
+        current_directory = os.getcwd()
+        self.client_socket.sendall(f"257 \"{current_directory}\"".encode())
 
     def cd(self, dir_path):
         try:
