@@ -151,7 +151,7 @@ class FTPServer:
         self.allowed_users = self.load_users()
     
     def run (self):
-        self.server_socket.bind((self.server_port, self.server_port))
+        self.server_socket.bind((self.server_host, self.server_port))
         self.server_socket.listen(self.max_queued)
 
         while True:
@@ -187,10 +187,9 @@ class FTPServer:
 
     def load_users(self):
         try:
-            register_file = open("users.txt", "r")
+            register_file = open("src/users.txt.txt", "r")
         except FileNotFoundError:
-            print(
-                "Server is not able to authenticate user due to some issues with server")
+            print("Ocurrió un error")
             sys.exit()
 
         users = []
