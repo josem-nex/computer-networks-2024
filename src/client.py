@@ -439,6 +439,13 @@ class FTPClient:
                 self.stop = True
                 noop_thread.join()
                 break
+    def portCnx(self, ip, port):
+        h1, h2, h3, h4 = map(int, ip.split('.'))
+    
+        p1, p2 = divmod(port, 256)
+
+        response = self.send(f"PORT {h1},{h2},{h3},{h4},{p1},{p2}")
+        print(response)
         
         
 if __name__ == "__main__":
@@ -551,6 +558,11 @@ if __name__ == "__main__":
             client.idle()
         elif command == "stop":
             client.abort()
+        elif command == "port":
+            if len(args) > 0:
+                client.portCnx(args[0], int(args[1]))
+            else:
+                print("Error: port requiere un argumento.")
         elif command == "help":
             print("Comandos disponibles para ambos modos:")
             print("ls: Listar los archivos del directorio actual.")
@@ -580,6 +592,7 @@ if __name__ == "__main__":
             print("smnt: Montar un sistema de archivos.")
             print("server-info: Mostrar estado actual del servidor")
             print("idle: Mantener la conexión activa.")
+            print("port: Establecer una conexión de datos.")
             
         else:
             print("Comando no válido, use help para ver la lista de comandos disponibles.")

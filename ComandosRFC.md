@@ -91,3 +91,7 @@ Método download_file
 
 Método noop
 Método idle
+
+## PORT
+
+Método portCnx
