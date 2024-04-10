@@ -1,4 +1,6 @@
+import csv
 import socket
+import sys
 from threading import Thread
 import os  # listdir(), getcwd(), chdir(), mkdir()
 import subprocess
@@ -125,8 +127,7 @@ class ThreadFunctions(Thread):
 
     def receive_file(self, file_name, length):
         self.client_socket.sendall("Ready".encode("utf-8"))
-        print("Server ready to accept file: {} from client: {}:{}".format(
-            file_name, self.client_ip, self.client_port))
+        print("Servidor listo para recibir: {} del cliente: {}:{}".format(file_name, self.client_ip, self.client_port))
 
         save_file = open("{}".format(file_name), "wb")
 
@@ -138,24 +139,21 @@ class ThreadFunctions(Thread):
 
         save_file.close()
 
-        self.client_socket.sendall("Received,{}".format(
-            amount_recieved_data).encode('utf-8'))
-        print("Server done receiving from client {}:{}. File Saved.".format(
-            self.client_ip, self.client_port))
+        self.client_socket.sendall("Received,{}".format(amount_recieved_data).encode('utf-8'))
+        print("Servidor recibió el archivo de {}:{}".format(self.client_ip, self.client_port))
 
 class FTPServer:
     def __init__(self, host = '127.0.0.5', port = 22):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server_socket.bind((host, port))
-        self.server_socket.listen(5)
-        self.clients = []
-        self.host = host
-        self.port = port
+        self.server_host = host
+        self.server_port = port
         self.max_queued = 10
+        self.allowed_users = self.load_users()
     
     def run (self):
-        self.server_socket.bind(('', self.port))
+        self.server_socket.bind((self.server_port, self.server_port))
         self.server_socket.listen(self.max_queued)
+
         while True:
             client_socket, client_addr = self.server_socket.accept()
 
@@ -180,25 +178,29 @@ class FTPServer:
                     break
         for thread in created_threads:
             thread.join()
-            
-    def handle_client(self, client_socket):
-        client_socket.send(b"220 Bienvenido al servidor FTP\n")
-        while True:
-            data = client_socket.recv(1024)
-            if data:
-                print(data)
-                response = self.handle_command(data.decode())
-                client_socket.send(response)
-            else:
-                client_socket.close()
-                break
-            
-    def handle_command(self, command: str):
-        command = command.strip().upper()
-        if command == "QUIT":
-            return b"221 Goodbye\n"
-        else:
-            return b"500 Comando no soportado\n"
+
+    def auth_user(self, name=None, password=None):
+        if name == None or password == None:
+            return False
+        for user in self.allowed_users:
+            if name == user["name"] and user["passwd"] == password:
+                return True
+        return False
+
+    def load_users(self):
+        try:
+            register_file = open("users.txt", "r")
+        except FileNotFoundError:
+            print(
+                "Server is not able to authenticate user due to some issues with server")
+            sys.exit()
+
+        users = []
+        csv_file = csv.DictReader(register_file, delimiter=",")
+        for user in csv_file:
+            users.append(user)
+
+        return users
         
 if __name__ == "__main__":
     ftp_server = FTPServer()
