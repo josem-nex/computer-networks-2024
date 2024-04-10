@@ -50,6 +50,7 @@ class ThreadFunctions(Thread):
             self.client_socket.sendall(packet.encode())
 
     def pwd(self):
+        # TODO
         pass
 
     def cd(self, dir_path):
@@ -81,73 +82,48 @@ class ThreadFunctions(Thread):
     def rm(self, file_name):
         try:
             os.remove(file_name)
-            self.client_socket.sendall(
-                f"File '{file_name}' successfully removed.".encode())
+            self.client_socket.sendall(f"Archivo '{file_name}' removido".encode())
         except FileNotFoundError:
-            self.client_socket.sendall(
-                f"File named '{file_name}' doesn't exists.".encode())
+            self.client_socket.sendall(f"Archivo '{file_name}' no existe".encode())
         except IsADirectoryError:
-            self.client_socket.sendall(
-                f"'{file_name}' is a directory.".encode())
-        # except OSError:
-        #     self.client_socket.sendall(f"directory is not empty".encode())
+            self.client_socket.sendall(f"'{file_name}' es un directorio".encode())
 
     def send_file(self, file_name):
-        """
-        Sends requested file to client if it exits on the server.
-
-        Params:
-            file_name (str): name of file to find and transfer
-        """
-
+        # enviar archivo a un cliente conectado a un servidor FTP
         try:
             dataPort = self.client_socket.recv(1024).decode()
-            print("[Control] Data port is {}".format(dataPort))
 
-            # Connect to the data connection
             dataConnection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             dataConnection.connect((self.client_ip, int(dataPort)))
 
             file_size = os.path.getsize(file_name)
-            self.client_socket.sendall(
-                "Exists,{}".format(file_size).encode('utf-8'))
+            self.client_socket.sendall("> {}".format(file_size).encode('utf-8'))
 
             while True:
                 recv_data = self.client_socket.recv(1024)
                 request = recv_data.decode('utf-8').strip().split(",")
 
                 if request[0] == "Ready":
-                    print("Sending file {} to client {}".format(
-                        file_name, self.client_ip))
+                    print("Enviando {} al cliente {}".format(file_name, self.client_ip))
 
                     with open(file_name, "rb") as file:
                         dataConnection.sendfile(file)
                 elif request[0] == "Received":
                     if int(request[1]) == file_size:
                         self.client_socket.sendall("Success".encode('utf-8'))
-                        print("{} successfully downloaded to client {}".format(
-                            file_name, self.client_ip))
+                        print("{} descargado en el cliente {}".format(file_name, self.client_ip))
                         break
                     else:
-                        print("Something went wrong trying to download to client {}:{}. Try again".format(
-                            self.client_ip, self.client_port))
+                        print("Algo salió mal al intentar descargar en el cliente {}:{}".format(self.client_ip, self.client_port))
                         break
                 else:
-                    print("Something went wrong trying to download to client {}:{}. Try again".format(
-                        self.client_ip, self.client_port))
+                    print("Algo salió mal al intentar descargar en el cliente {}:{}".format(self.client_ip, self.client_port))
                     break
         except IOError:
-            print("File {} does not exist on server".format(file_name))
+            print("{} no existe en el servidor".format(file_name))
             self.client_socket.sendall("Failed".encode('utf-8'))
 
     def receive_file(self, file_name, length):
-        """
-        Reads a file that is sent from the client.
-
-        Params:
-            file_name (str): name of file to be transfered
-            length (str): byte length of the file to be transfered from client
-        """
         self.client_socket.sendall("Ready".encode("utf-8"))
         print("Server ready to accept file: {} from client: {}:{}".format(
             file_name, self.client_ip, self.client_port))
@@ -204,15 +180,6 @@ class FTPServer:
                     break
         for thread in created_threads:
             thread.join()
-    
-    def start(self):
-        print(f"Servidor FTP iniciado en {self.host}:{self.port}")
-        while True:
-            client_socket, addr = self.server_socket.accept()
-            print(f"Conexión desde {addr}")
-            client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
-            client_thread.start()
-            self.clients.append(client_thread)
             
     def handle_client(self, client_socket):
         client_socket.send(b"220 Bienvenido al servidor FTP\n")
@@ -235,5 +202,5 @@ class FTPServer:
         
 if __name__ == "__main__":
     ftp_server = FTPServer()
-    ftp_server.start()
+    ftp_server.run()
     
