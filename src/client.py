@@ -25,10 +25,8 @@ class FTPClient:
 
     def pasv_connect(self):
         try:
-            # Enviar el comando PASV al servidor y obtener la respuesta
             response =self.send("PASV") 
             print(response)
-            # Extraer la dirección IP y el puerto de la respuesta, expresión regular
             match = re.search(r'(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)', response)
             if match:
                 ip_parts = [int(x) for x in match.groups()[:4]]
