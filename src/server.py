@@ -176,8 +176,6 @@ class FTPServer:
                     client_socket.sendall("FAILURE".encode())
                     client_socket.close()
                     break
-        for thread in created_threads:
-            thread.join()
 
     def auth_user(self, name=None, password=None):
         if name == None or password == None:
