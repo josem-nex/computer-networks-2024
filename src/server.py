@@ -18,8 +18,6 @@ class ThreadFunctions(Thread):
         while True:
             request = self.client_socket.recv(1024).decode().strip()
             if not request:
-                print("Disconnecting from client {}:{}".format(
-                    self.client_ip, self.client_port))
                 self.client_socket.shutdown(socket.SHUT_RDWR)
                 self.client_socket.close()
                 break
@@ -52,45 +50,33 @@ class ThreadFunctions(Thread):
             self.client_socket.sendall(packet.encode())
 
     def pwd(self):
-        try:
-            currDir = os.getcwd()
-            self.client_socket.sendall(currDir.encode())
-        except:
-            self.client_socket.sendall("Server facing issue while getting working directory.")
+        pass
 
     def cd(self, dir_path):
         try:
             if (dir_path == '..' and os.getcwd() == ServerFolder):
-                self.client_socket.sendall(
-                    f"changed directory to '{dir_path}'".encode())
+                self.client_socket.sendall(f"Cambio de directorio a: '{dir_path}'".encode())
             else:
                 os.chdir(dir_path)
-                self.client_socket.sendall(
-                    f"changed directory to '{dir_path}'".encode())
+                self.client_socket.sendall(f"Cambio de directorio a: '{dir_path}'".encode())
         except FileNotFoundError:
-            self.client_socket.sendall(
-                f"directory '{dir_path}' not found".encode())
+            self.client_socket.sendall(f"Directorio '{dir_path}' no encontrado".encode())
 
     def mkdir(self, dir_name):
         try:
-            # path = ServerFolder+"/"+dir_name
             os.mkdir(dir_name)
-            self.client_socket.sendall(
-                f"Directory '{dir_name}' successfully created.".encode())
+            self.client_socket.sendall(f"Directorio '{dir_name}' creado".encode())
         except OSError:
-            self.client_socket.sendall(
-                f"directory named '{dir_name}' already exists.".encode())
+            self.client_socket.sendall(f"El directorio con nombre: '{dir_name}' existe".encode())
 
     def rmdir(self, dir_name):
         try:
             os.removedirs(dir_name)
-            self.client_socket.sendall(
-                f"Directory '{dir_name}' successfully removed.".encode())
+            self.client_socket.sendall(f"Directorio '{dir_name}' removido".encode())
         except FileNotFoundError:
-            self.client_socket.sendall(
-                f"directory named '{dir_name}' doesn't exists.".encode())
+            self.client_socket.sendall(f"Directorio con nombre: '{dir_name}' no existe".encode())
         except OSError:
-            self.client_socket.sendall(f"directory is not empty".encode())
+            self.client_socket.sendall(f"El directorio no está vacío".encode())
 
     def rm(self, file_name):
         try:
